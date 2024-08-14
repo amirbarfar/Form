@@ -7,11 +7,11 @@ export default class Form extends Component {
     super(props)
 
     this.state = {
-      data : [],
+      data : JSON.parse(localStorage.getItem("data")) ?? [],
       Name : '',
       LastName : '',
       Description : '',
-      status : false
+      submited : false
     }
 
     
@@ -19,6 +19,36 @@ export default class Form extends Component {
 
   submitHandler(event){
     event.preventDefault()
+
+    this.setState({
+      submited : true
+    })
+
+    if (this.state.Name && this.state.LastName && this.state.Description) {
+      let newdata = {
+        id : this.state.data.length + 1,
+        name : this.state.Name,
+        lastname : this.state.LastName,
+        description : this.state.Description
+      }
+
+      if (localStorage.getItem("data")) {
+        let test = JSON.parse(localStorage.getItem("data"))
+        localStorage.setItem("data" , JSON.stringify([...test , newdata]))
+      }else{
+        localStorage.setItem("data" , JSON.stringify([newdata]))
+      }
+
+      
+      this.setState({
+        data : [...this.state.data , newdata],
+        Name : '',
+        LastName : '',
+        Description : '',
+        submited : false
+      })
+
+    }
   }
 
   NameHandler(event){
@@ -49,31 +79,16 @@ export default class Form extends Component {
     this.setState({
       data : [...this.state.data]
     })
-  }
 
+    let dataLocal = JSON.parse(localStorage.getItem("data"))
 
-  clickHandler(){
+    let indexLocal = dataLocal.findIndex((item)=>{
+      return id === item.id
+    })
 
-    if (this.state.Name && this.state.LastName && this.state.Description) {
-      this.state.status = true
+    dataLocal.splice(indexLocal , 1)
 
-      let newdata = {
-        id : this.state.data.length + 1,
-        name : this.state.Name,
-        lastname : this.state.LastName,
-        description : this.state.Description
-      }
-
-      this.setState({
-        data : [...this.state.data , newdata],
-        Name : '',
-        LastName : '',
-        Description : ''
-      })
-
-    }else{
-      alert("Please fill the form first and then press the button :)")
-    }
+    localStorage.setItem("data" , JSON.stringify(dataLocal))
   }
 
   render() {
@@ -82,14 +97,26 @@ export default class Form extends Component {
         <div className="font-mono text-xl flex justify-evenly gap-20 items-start my-10 container mx-auto">
         <div>
           <form action="" className="w-[450px] h-[450px] border-2 rounded-md border-white p-5" onSubmit={(event) => this.submitHandler(event)}>
-            <h2 className="text-center mb-10">Form Send Comments</h2>
+            <h2 className="text-center mb-5">Form Send Comments</h2>
             <label>Name: </label>
             <input type="text" className="w-[405px] h-12 border-2 border-slate-800 rounded-md p-3" value={this.state.Name} onChange={(event) => this.NameHandler(event)}/>
+            {
+              this.state.submited && !this.state.Name && 
+              <div className='text-red-400 text-sm'>First enter your Name :)</div>
+            }
             <label>LastName: </label>
             <input type="text" className="w-[405px] h-12 border-2 border-slate-800 rounded-md p-3" value={this.state.LastName} onChange={(event) => this.LastNameHandler(event)}/>
+            {
+              this.state.submited && !this.state.LastName && 
+              <div className='text-red-400 text-sm'>First enter your LastName :)</div>
+            }
             <label>Description: </label>
             <input type="text" className="w-[405px] h-12 border-2 border-slate-800 rounded-md p-3" value={this.state.Description} onChange={(event) => this.DescriptionHandler(event)}/>
-            <button type="submit" className="w-[405px] h-12 bg-slate-800 text-white rounded-md mt-5" onClick={this.clickHandler.bind(this)}>Send :)</button>
+            {
+              this.state.submited && !this.state.Description && 
+              <div className='text-red-400 text-sm'>First enter your Description :)</div>
+            }
+            <button type="submit" className="w-[405px] h-12 bg-slate-800 text-white rounded-md mt-5">Send :)</button>
           </form>
         </div>
         <div className='max-h-[500px] overflow-y-scroll'>
@@ -105,11 +132,9 @@ export default class Form extends Component {
             </thead>
             <tbody className='text-center'>
               {
-                this.state.status === true && (
                   this.state.data.map((item)=>
                     <Table {...item} onRemove={this.removeHandler.bind(this)} key={item.id}/>
                   )
-                )
               }
             </tbody>
           </table>
